@@ -119,8 +119,16 @@ class LahutaAdmin {
                                 <?php echo __('Gallery', 'lahuta-plugin'); ?>
                             </button>
                         </li>
-
-
+                        <li class="nav-item lahuta-admin-nav__item" role="presentation">
+                            <button class="nav-link"
+                                    id="development-tab"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#tab2"
+                                    type="button"
+                                    role="tab">
+                                <?php echo __('Plugin Settings', 'lahuta-plugin'); ?>
+                            </button>
+                        </li>
                         <li class="nav-item lahuta-admin-nav__item" role="presentation">
                             <button class="nav-link"
                                     id="artwork-tab"
@@ -135,7 +143,7 @@ class LahutaAdmin {
                             <button class="nav-link"
                                     id="development-tab"
                                     data-bs-toggle="tab"
-                                    data-bs-target="#tab2"
+                                    data-bs-target="#tab4"
                                     type="button"
                                     role="tab">
                                 <?php echo __('Shop', 'lahuta-plugin'); ?>
@@ -154,8 +162,16 @@ class LahutaAdmin {
                         <div class="tab-pane fade lahuta-admin-tabs__content"
                             id="tab2" role="tabpanel"
                             aria-labelledby="development-tab">
-                            <h4>Under Development</h4>
-                            <p>Developers and programmers.</p>
+                            <!-- Gallery management starts here -->
+                            <?php include LAHUTA_PLUGIN_DIR . 'includes/templates/lahuta-plugin-settings.php'; ?>
+                             <!-- Gallery management ENDS here -->
+                        </div>
+
+                        <div class="tab-pane fade lahuta-admin-tabs__content"
+                            id="tab3" role="tabpanel"
+                            aria-labelledby="artwork-tab">
+                            <h4>Artwork</h4>
+                            <p>Artists, painters, and illustrators.</p>
                         </div>
 
                         <div class="tab-pane fade lahuta-admin-tabs__content"

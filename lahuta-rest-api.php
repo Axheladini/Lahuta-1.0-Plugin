@@ -29,6 +29,7 @@ $files = array(
   'includes/class-activator.php',
   'includes/class-deactivator.php',
   'includes/Admin/class-admin.php',
+  'includes/Admin/class-plugin-settings.php',
   'includes/Admin/class-gallery-category-admin.php',
   'includes/Admin/class-add-new-gallery.php',
   'includes/PostTypes/class-gallery-post-type.php',

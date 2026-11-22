@@ -6,6 +6,7 @@ namespace LahutaRestAPI;
 use LahutaRestAPI\Admin\LahutaAdmin;
 use LahutaRestAPI\Admin\GalleryCategoryAdmin;
 use LahutaRestAPI\Admin\AddNewGallery;
+use LahutaRestAPI\Admin\LahutaPluginSettings;
 use LahutaRestAPI\PostTypes\GalleryPostType; // Added gallery post type
 use LahutaRestAPI\PostTypes\GalleryCategoryTaxonomy; // Added gallery category taxonomy
 use LahutaRestAPI\PostTypes\GalleryImagePostType;  // Added gallery image post type (single image details)
@@ -36,7 +37,9 @@ final class Plugin {
 
         $add_new_gallery = new AddNewGallery();
         $add_new_gallery->register();
-        
+
+        $plugin_settings = new LahutaPluginSettings();
+        $plugin_settings->register();
 
         // Initialize other classes
         $gallery_post_type = new GalleryPostType();

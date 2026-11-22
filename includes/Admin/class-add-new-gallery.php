@@ -12,6 +12,8 @@ final class AddNewGallery {
     private const NONCE_ACTION = 'lahuta_gallery_nonce';
     private const GALLERY_META_KEY = 'gallery_id_custom';
     private const MAIN_IMAGE_META_KEY = 'is_main_custom';
+    private const GALLERY_CREATED_DATE_META_KEY = 'gallery_created_date';
+    private const IMAGE_CREATED_DATE_META_KEY = 'image_created_date';
 
     private const TITLE_MIN = 5;
     private const TITLE_MAX = 200;
@@ -70,6 +72,10 @@ final class AddNewGallery {
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( self::NONCE_ACTION ),
+                'settings' => array(
+                    'galleryDateCreatedEnabled' => $this->is_setting_enabled( 'lahuta-gallery-date-created' ),
+                    'imageDateCreatedEnabled'   => $this->is_setting_enabled( 'lahuta-image-date-created' ),
+                ),
                 'limits'  => array(
                     'titleMin'    => self::TITLE_MIN,
                     'titleMax'    => self::TITLE_MAX,
@@ -86,11 +92,13 @@ final class AddNewGallery {
                     'remove'           => __( 'Remove', 'lahuta-rest-api' ),
                     'imageTitle'       => __( 'Image title', 'lahuta-rest-api' ),
                     'imageDescription' => __( 'Image description', 'lahuta-rest-api' ),
+                    'dateDescription'  => __( 'Image or event date', 'lahuta-rest-api' ),
                     'mainImage'        => __( 'Main image', 'lahuta-rest-api' ),
                     'mainImageRequired'=> __( 'Select exactly one image as the main image before saving.', 'lahuta-rest-api' ),
                     'replaceThumb'     => __( 'Replace image (optional)', 'lahuta-rest-api' ),
                     'titleError'       => __( 'Image title is required and must be between 5 and 200 characters.', 'lahuta-rest-api' ),
                     'descError'        => __( 'Image description is required and must not exceed 2000 characters.', 'lahuta-rest-api' ),
+                    'dateError'        => __( 'Image date is required.', 'lahuta-rest-api' ),
                     'invalidFile'      => __( 'Only jpg, jpeg, png, gif and webp images are allowed.', 'lahuta-rest-api' ),
                     'tooManyImages'    => __( 'You can add up to 50 images per gallery.', 'lahuta-rest-api' ),
                     'fixImageErrors'   => __( 'Please fix the errors in the highlighted images.', 'lahuta-rest-api' ),
@@ -114,7 +122,10 @@ final class AddNewGallery {
      */
     public function ajax_save_gallery(): void {
 
+
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+        
+
 
         $gallery_id = isset( $_POST['gallery_id'] ) ? absint( $_POST['gallery_id'] ) : 0;
 
@@ -151,8 +162,10 @@ final class AddNewGallery {
         if ( is_wp_error( $terms ) ) {
             $this->fail( $terms->get_error_message(), 500 );
         }
-
+   
         update_post_meta( $gallery_id, 'category_id_custom', $data['category_id'] );
+        
+        update_post_meta( $gallery_id, self::GALLERY_CREATED_DATE_META_KEY, $data['created_date'] );
 
         foreach ( $data['removed_images'] as $image_id ) {
             $this->delete_image( $image_id );
@@ -282,6 +295,20 @@ final class AddNewGallery {
             ? (int) $_POST['lahuta_gallery_category']
             : 0;
 
+            
+        if ( $this->is_setting_enabled( 'lahuta-gallery-date-created' ) ) {
+            $created_date = isset( $_POST['created_date'] ) && is_string( $_POST['created_date'] )
+                ? sanitize_text_field( wp_unslash( $_POST['created_date'] ) )
+                : '';
+
+            if ( ! $this->is_valid_date( $created_date ) ) {
+                $errors['gallery_created_date'] = __( 'Please enter a valid gallery date.', 'lahuta-rest-api' );
+            }
+        } else {
+            $created_date = current_time( 'Y-m-d' );
+        }
+
+
         $title_length = mb_strlen( $title );
 
         if ( $title_length < self::TITLE_MIN || $title_length > self::TITLE_MAX ) {
@@ -307,6 +334,7 @@ final class AddNewGallery {
         }
 
         $images          = array();
+        $image_date_enabled = $this->is_setting_enabled( 'lahuta-image-date-created' );
         $raw_images      = isset( $_POST['images'] ) && is_array( $_POST['images'] )
             ? wp_unslash( $_POST['images'] )
             : array();
@@ -343,6 +371,32 @@ final class AddNewGallery {
                 $errors[ $prefix . 'description' ] = __( 'Image description is required and must not exceed 2000 characters.', 'lahuta-rest-api' );
             }
 
+            if ( $image_date_enabled ) {
+                $has_image_created_date = array_key_exists( 'created_date', $raw );
+                $image_created_date = $has_image_created_date && is_string( $raw['created_date'] )
+                    ? sanitize_text_field( $raw['created_date'] )
+                    : '';
+
+                if ( $has_image_created_date && ! is_string( $raw['created_date'] ) ) {
+                    $errors[ $prefix . 'created_date' ] = __( 'Please enter a valid image or event date.', 'lahuta-rest-api' );
+                }
+
+                if ( '' === $image_created_date ) {
+                    $stored_date = $image_id
+                        ? (string) get_post_meta( $image_id, self::IMAGE_CREATED_DATE_META_KEY, true )
+                        : '';
+                    $image_created_date = $this->is_valid_date( $stored_date )
+                        ? $stored_date
+                        : current_time( 'Y-m-d' );
+                }
+
+                if ( ! $this->is_valid_date( $image_created_date ) ) {
+                    $errors[ $prefix . 'created_date' ] = __( 'Please enter a valid image or event date.', 'lahuta-rest-api' );
+                }
+            } else {
+                $image_created_date = current_time( 'Y-m-d' );
+            }
+
             $thumb_error = $this->check_file(
                 'image_thumbnail_' . $index,
                 ! $image_id,
@@ -357,11 +411,12 @@ final class AddNewGallery {
             $main_image_count += $is_main ? 1 : 0;
 
             $images[] = array(
-                'index'       => $index,
-                'id'          => $image_id,
-                'title'       => $image_title,
-                'description' => $description,
-                'is_main'     => $is_main,
+                'index'        => $index,
+                'id'           => $image_id,
+                'title'        => $image_title,
+                'description'  => $description,
+                'created_date' => $image_created_date,
+                'is_main'      => $is_main,
             );
         }
 
@@ -378,9 +433,24 @@ final class AddNewGallery {
             'title'          => $title,
             'excerpt'        => $excerpt,
             'category_id'    => $category_id,
+            'created_date'   => $created_date,
             'images'         => $images,
             'removed_images' => $removed_images,
         );
+    }
+
+    private function is_setting_enabled( string $setting_key ): bool {
+
+        $settings = get_option( 'lahuta_plugin_settings', array() );
+
+        return is_array( $settings ) && ! empty( $settings[ $setting_key ] );
+    }
+
+    private function is_valid_date( string $date ): bool {
+
+        $parsed_date = \DateTimeImmutable::createFromFormat( '!Y-m-d', $date );
+
+        return false !== $parsed_date && $parsed_date->format( 'Y-m-d' ) === $date;
     }
 
     /**
@@ -482,6 +552,7 @@ final class AddNewGallery {
         }
 
         update_post_meta( $image_id, self::MAIN_IMAGE_META_KEY, (bool) $image['is_main'] );
+        update_post_meta( $image_id, self::IMAGE_CREATED_DATE_META_KEY, $image['created_date'] );
 
         return true;
     }
@@ -526,6 +597,8 @@ final class AddNewGallery {
         $main_image_url = '';
         $has_main_image = false;
 
+        $date_created   = get_post_meta( $gallery->ID, self::GALLERY_CREATED_DATE_META_KEY, true );
+
         foreach ( $this->get_image_posts( $gallery->ID ) as $image ) {
             $is_main   = (bool) get_post_meta( $image->ID, self::MAIN_IMAGE_META_KEY, true );
             $image_url = (string) get_the_post_thumbnail_url( $image->ID, 'thumbnail' );
@@ -541,6 +614,7 @@ final class AddNewGallery {
                 'id'            => $image->ID,
                 'title'         => $image->post_title,
                 'description'   => $image->post_content,
+                'created_date'  => get_post_meta( $image->ID, self::IMAGE_CREATED_DATE_META_KEY, true ),
                 'thumbnail_url' => $image_url,
                 'is_main'       => $is_main,
             );
@@ -552,6 +626,7 @@ final class AddNewGallery {
             'excerpt'       => $gallery->post_excerpt,
             'category_id'   => $term ? $term->term_id : 0,
             'category_name' => $term ? $term->name : '',
+            'created_date'  => $date_created,
             'thumbnail_url' => $main_image_url,
             'images'        => $images,
         );

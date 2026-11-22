@@ -66,6 +66,22 @@
                             <?php esc_html_e( 'Gallery category is required.', 'lahuta-rest-api' ); ?>
                         </small>
                     </div>
+                    <!-- If the gallery date created setting is enabled, show the gallery created date input field -->
+                    <?php 
+                   
+                    $settings = get_option( 'lahuta_plugin_settings', array() );
+                    $allow_gallery_date = ! empty( $settings['lahuta-gallery-date-created'] );
+
+                    if ( $allow_gallery_date ) : ?>
+                        <div class="form-group lahuta-gallery-created-date">
+                            <label for="galleryCreatedDate" class="lahuta-form__label"><?php esc_html_e( 'Gallery Date created', 'lahuta-rest-api' ); ?></label>
+                            <input type="date" name="galleryCreatedDate" id="galleryCreatedDate" class="form-control lahuta-form__input" aria-describedby="galleryCreatedDateError">
+                            <small id="galleryCreatedDateError" class="form-text text-muted lahuta-form__error">
+                                <?php esc_html_e( 'Gallery created date is required and must be a valid date.', 'lahuta-rest-api' ); ?>
+                            </small>
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="form-group">
                         <label class="lahuta-form__label"><?php esc_html_e( 'Gallery images', 'lahuta-rest-api' ); ?></label>
                         <div id="lahuta-gallery-images" class="lahuta-gallery-images lahuta-form__upload-wrapper">

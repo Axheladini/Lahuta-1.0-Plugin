@@ -58,6 +58,23 @@ final class GalleryImagePostType {
         ]);
 
         register_post_meta(
+            'lahuta_gallery_image', 
+            'image_created_date', [
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'sanitize_callback' => function( $value ) {
+
+                $date = \DateTimeImmutable::createFromFormat( '!Y-m-d', (string) $value );
+                return $date && $date->format( 'Y-m-d' ) === $value ? $value : '';
+
+            },
+            'auth_callback'     => function(){
+                return current_user_can( 'edit_posts' );
+            }
+        ]);
+
+        register_post_meta(
             'lahuta_gallery_image',
             'is_main_custom', [
             'type'              => 'boolean',

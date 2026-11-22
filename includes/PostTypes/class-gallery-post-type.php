@@ -76,6 +76,26 @@ final class GalleryPostType {
             'auth_callback'     => [$this, 'meta_auth_callback'],
         ]);
 
+        
+        register_post_meta(
+            'lahuta_gallery', 
+            'gallery_created_date', [
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'sanitize_callback' => function( $value ) {
+
+            
+                $date = \DateTimeImmutable::createFromFormat( '!Y-m-d', (string) $value );
+                return $date && $date->format( 'Y-m-d' ) === $value ? $value : '';
+
+            },
+            'auth_callback'     => function(){
+                return current_user_can( 'edit_posts' );
+            }
+        ]);
+
+
     }
 
     public function meta_auth_callback(

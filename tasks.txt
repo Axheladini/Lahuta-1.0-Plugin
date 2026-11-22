@@ -1,0 +1,4 @@
+
+1. Check image size uploaded and give propper error messagings 
+2. Add Gallery date and image date - done
+3. 

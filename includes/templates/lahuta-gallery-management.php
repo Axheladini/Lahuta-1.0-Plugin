@@ -45,19 +45,6 @@
             >
             <?php echo __('Gallery Categories', 'lahuta-plugin'); ?>
             </button>
-
-            <button
-                class="nav-link"
-                id="gallery-settings-tab"
-                data-bs-toggle="pill"
-                data-bs-target="#gallery-settings"
-                type="button"
-                role="tab"
-                aria-controls="gallery-settings"
-                aria-selected="false"
-            >
-                <?php echo __('Gallery Settings', 'lahuta-plugin'); ?>
-            </button>
         </div>
     </div>
 
@@ -86,17 +73,6 @@
             <!-- Include the gallery category management template --> 
             <?php include LAHUTA_PLUGIN_DIR . 'includes/templates/lahuta-gallery-category-management.php'; ?>
             <!-- Gallery structure ENDS here -->
-        </div>
-
-        <div
-            class="tab-pane fade lahuta-gallery__pane"
-            id="gallery-settings"
-            role="tabpanel"
-            aria-labelledby="gallery-settings-tab"
-            tabindex="0"
-            >
-         <h4 class="lahuta-h4"><?php echo __('Gallery Settings', 'lahuta-plugin'); ?></h4>
-         <p class="lahuta-p"><?php echo __('Manage your gallery settings.', 'lahuta-plugin'); ?></p>
         </div>
     </div>
 </div>
